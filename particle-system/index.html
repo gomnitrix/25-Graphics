@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angular Spring Simulation</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #222831;
+        }
+        canvas {
+            border: 2px solid #393e46;
+            background: #f7f7f7;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+        }
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #393e46;
+            color: #eeeeee;
+            padding: 16px;
+            border-radius: 10px;
+            box-shadow: 0 0 16px rgba(0,0,0,0.15);
+        }
+        .control-group {
+            margin: 12px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ffd369;
+        }
+        select, input[type=range] {
+            width: 140px;
+            margin-bottom: 8px;
+        }
+        button {
+            background: #00adb5;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 16px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #ffd369;
+            color: #222831;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="simulationCanvas" width="600" height="700"></canvas>
+    <div class="controls">
+        <div class="control-group">
+            <label for="sceneSelect">Scene:</label>
+            <select id="sceneSelect">
+                <option value="angular">Angular Spring</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label for="stiffness">Stiffness:</label>
+            <input type="range" id="stiffness" min="0" max="100" value="200">
+        </div>
+        <div class="control-group">
+            <label for="gravity">Gravity:</label>
+            <input type="range" id="gravity" min="0" max="100" value="80">
+        </div>
+        <div class="control-group">
+            <label for="frameRateInput">Frame Rate (0 = Pause):</label>
+            <input type="number" id="frameRateInput" min="0" max="100" value="0">
+        </div>
+        <div class="control-group">
+            <label for="integratorSelect">Integrator:</label>
+            <select id="integratorSelect">
+                <option value="Verlet">Verlet</option>
+                <option value="Euler">Euler</option>
+            </select>
+        </div>
+        <button id="pauseButton">Pause</button>
+    </div>
+
+    <script src="js/forces/Force.js"></script>
+    <script src="js/integrators/Integrator.js"></script>
+    <script src="js/integrators/VerletIntegrator.js"></script>
+    <script src="js/integrators/EulerIntegrator.js"></script>
+    <script src="js/core/Particle.js"></script>
+    <script src="js/forces/GravityForce.js"></script>
+    <script src="js/forces/SpringForce.js"></script>
+    <script src="js/forces/AngularSpringForce.js"></script>
+    <script src="js/forces/GroundForce.js"></script>
+    <script src="js/forces/DragForce.js"></script>
+    <script src="js/constraints/DistanceConstraint.js"></script>
+    <script src="js/core/Simulation.js"></script>
+    <script>
+        // Initialize simulation
+        const canvas = document.getElementById('simulationCanvas');
+        const simulation = new Simulation(canvas);
+        function setupScene() {
+            var springStructure = simulation.createSpringStructure(200, 200, 8, 100, 35);
+        }
+        setupScene();
+
+        // Controls
+        const pauseButton = document.getElementById('pauseButton');
+        const stiffnessSlider = document.getElementById('stiffness');
+        const sceneSelect = document.getElementById('sceneSelect');
+        const gravitySlider = document.getElementById('gravity');
+        const frameRateInput = document.getElementById('frameRateInput');
+        const integratorSelect = document.getElementById('integratorSelect');
+        stiffnessSlider.value = simulation.forces[0].stiffness;
+        gravitySlider.value = simulation.gravity.g;
+        frameRateInput.value = simulation.frameRate;
+        integratorSelect.value = simulation.integrator.name();
+
+        pauseButton.addEventListener('click', () => {
+            if (simulation.isRunning) {
+                simulation.pause();
+                pauseButton.textContent = 'Resume';
+            } else {
+                simulation.start();
+                pauseButton.textContent = 'Pause';
+            }
+        });
+        stiffnessSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            if (isNaN(value)) return;
+            simulation.forces.forEach(f => {
+                f.setStiffness(value);
+            });
+        });
+        sceneSelect.addEventListener('change', (e) => {
+            // Only one scene for now, but ready for more
+            setupScene();
+        });
+        gravitySlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            if (isNaN(value)) return;
+            simulation.gravity.g = value;
+        });
+        frameRateInput.addEventListener('input', (e) => {
+            const value = parseInt(e.target.value, 10);
+            if (isNaN(value)) return;
+            simulation.frameRate = value;
+            simulation.lastTime = 0;
+        });
+        integratorSelect.addEventListener('change', (e) => {
+            const value = e.target.value;
+            if (value === 'Verlet') {
+                simulation.integrator = new VerletIntegrator();
+            } else if (value === 'Euler') {
+                simulation.integrator = new EulerIntegrator();
+            }
+        });
+
+        // Start simulation
+        simulation.start();
+    </script>
+</body>
+</html> 
