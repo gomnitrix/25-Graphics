@@ -92,6 +92,12 @@ class Simulation {
         return spring;
     }
 
+    addCircularWire(particle, centerX, centerY, radius) {
+        const constraint = new CircularWireConstraint(particle, centerX, centerY, radius);
+        this.constraints.push(constraint);
+        return constraint;
+    }
+
     createSpringStructure(x, y, particlesNum, width = 50, height = 20) {
         const particles = [];
         const springs = [];
@@ -129,6 +135,44 @@ class Simulation {
         this.forces = springs;
         this.constraints = constraints;
         return;
+    }
+
+    createCircleScene() {
+        // center point
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+
+        // particle1 of the circle
+        const angle1 = Math.PI / 4;
+        const radius1 = 50;
+        const x1 = centerX + Math.cos(angle1) * radius1;
+        const y1 = centerY + Math.sin(angle1) * radius1;
+        const particle1 = this.addParticle(x1, y1, 1);
+        this.addCircularWire(particle1, centerX, centerY, radius1);
+
+        // particle2 of particle1 (spring)
+        const springLength = 20;
+        const x2 = x1;
+        const y2 = y1 + springLength;
+        const particle2 = this.addParticle(x2, y2, 1);
+        const spring = new SpringForce(particle1, particle2, springLength, 50, 0.5);
+        this.forces.push(spring);
+
+        // particle 3 of circle
+        const angle2 = Math.PI * 3 / 4;
+        const radius2 = 80;
+        const x3 = centerX + Math.cos(angle2) * (radius2);
+        const y3 = centerY + Math.sin(angle2) * (radius2);
+        const particle3 = this.addParticle(x3, y3, 1);
+        this.addCircularWire(particle3, centerX, centerY, radius2);
+        this.circleDecoration2 = { centerX, centerY, radius2 };
+
+        // particle 4 of particle 3 (rod)
+        const rodLength = 20;
+        const x4 = x3;
+        const y4 = y3 + rodLength;
+        const particle4 = this.addParticle(x4, y4, 1);
+        this.addDistanceConstraint(particle3, particle4, rodLength);
     }
     
     update(dt) {

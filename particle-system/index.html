@@ -63,6 +63,7 @@
             <label for="sceneSelect">Scene:</label>
             <select id="sceneSelect">
                 <option value="angular">Angular Spring</option>
+                <option value="circle">Circle</option>
             </select>
         </div>
         <div class="control-group">
@@ -98,14 +99,28 @@
     <script src="js/forces/GroundForce.js"></script>
     <script src="js/forces/DragForce.js"></script>
     <script src="js/constraints/DistanceConstraint.js"></script>
+    <script src="js/constraints/CircularWireConstraint.js"></script>
     <script src="js/core/Simulation.js"></script>
     <script>
         // Initialize simulation
         const canvas = document.getElementById('simulationCanvas');
         const simulation = new Simulation(canvas);
+
         function setupScene() {
-            var springStructure = simulation.createSpringStructure(200, 200, 8, 100, 35);
-        }
+                const sceneType = document.getElementById('sceneSelect').value;
+
+                // Clear existing simulation
+                simulation.particles = [];
+                simulation.forces = [];
+                simulation.constraints = [];
+
+                if (sceneType === 'angular') {
+                    simulation.createSpringStructure(200, 200, 8, 100, 35);
+                } else if (sceneType === 'circle') {
+                    simulation.createCircleScene();
+                }
+            }
+
         setupScene();
 
         // Controls
@@ -115,7 +130,10 @@
         const gravitySlider = document.getElementById('gravity');
         const frameRateInput = document.getElementById('frameRateInput');
         const integratorSelect = document.getElementById('integratorSelect');
-        stiffnessSlider.value = simulation.forces[0].stiffness;
+        
+        if (simulation.forces.length > 0) {
+                stiffnessSlider.value = simulation.forces[0].stiffness || 200;
+            }
         gravitySlider.value = simulation.gravity.g;
         frameRateInput.value = simulation.frameRate;
         integratorSelect.value = simulation.integrator.name();
@@ -139,6 +157,10 @@
         sceneSelect.addEventListener('change', (e) => {
             // Only one scene for now, but ready for more
             setupScene();
+            // Update stiffness slider value after scene change
+            if (simulation.forces.length > 0 && simulation.forces[0].stiffness !== undefined) {
+                stiffnessSlider.value = simulation.forces[0].stiffness;
+            }
         });
         gravitySlider.addEventListener('input', (e) => {
             const value = parseFloat(e.target.value);
