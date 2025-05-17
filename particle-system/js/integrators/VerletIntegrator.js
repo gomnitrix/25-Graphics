@@ -12,7 +12,9 @@ class VerletIntegrator extends Integrator {
             p.position.x = newX;
             p.position.y = newY;
         }
+        return true;
     }
+    
     name() {
         return 'Verlet';
     }

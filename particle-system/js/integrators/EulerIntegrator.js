@@ -9,7 +9,9 @@ class EulerIntegrator extends Integrator {
             p.position.x += p.velocity.x * dt;
             p.position.y += p.velocity.y * dt;
         }
+        return true;
     }
+    
     name() {
         return 'Euler';
     }

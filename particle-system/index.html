@@ -64,6 +64,7 @@
             <select id="sceneSelect">
                 <option value="angular">Angular Spring</option>
                 <option value="circle">Circle</option>
+                <option value="square">Square</option>
             </select>
         </div>
         <div class="control-group">
@@ -81,8 +82,10 @@
         <div class="control-group">
             <label for="integratorSelect">Integrator:</label>
             <select id="integratorSelect">
-                <option value="Verlet">Verlet</option>
                 <option value="Euler">Euler</option>
+                <option value="Midpoint">Mid-point</option>
+                <option value="RungeKutta">Runge-Kutta 4</option>
+                <option value="Verlet">Verlet</option>
             </select>
         </div>
         <button id="pauseButton">Pause</button>
@@ -92,6 +95,8 @@
     <script src="js/integrators/Integrator.js"></script>
     <script src="js/integrators/VerletIntegrator.js"></script>
     <script src="js/integrators/EulerIntegrator.js"></script>
+    <script src="js/integrators/MidpointIntegrator.js"></script>
+    <script src="js/integrators/RungeKuttaIntegrator.js"></script>
     <script src="js/core/Particle.js"></script>
     <script src="js/forces/GravityForce.js"></script>
     <script src="js/forces/SpringForce.js"></script>
@@ -99,8 +104,14 @@
     <script src="js/forces/GroundForce.js"></script>
     <script src="js/forces/DragForce.js"></script>
     <script src="js/constraints/DistanceConstraint.js"></script>
+    <script src="js/constraints/RodConstraint1.js"></script>
+    <script src="js/constraints/RodConstraint2.js"></script>
     <script src="js/constraints/CircularWireConstraint.js"></script>
     <script src="js/core/Simulation.js"></script>
+    <script src="js/core/AngularSpringScene.js"></script>
+    <script src="js/core/CircleScene.js"></script>
+    <script src="js/core/SquareScene.js"></script>
+    <script src="js/core/DoublePendulumScene.js"></script>
     <script>
         // Initialize simulation
         const canvas = document.getElementById('simulationCanvas');
@@ -118,6 +129,8 @@
                     simulation.createSpringStructure(200, 200, 8, 100, 35);
                 } else if (sceneType === 'circle') {
                     simulation.createCircleScene();
+                } else if (sceneType === 'square') {
+                    simulation.createSquareScene();
                 }
             }
 
@@ -179,6 +192,10 @@
                 simulation.integrator = new VerletIntegrator();
             } else if (value === 'Euler') {
                 simulation.integrator = new EulerIntegrator();
+            } else if (value === 'Midpoint') {
+                simulation.integrator = new MidpointIntegrator();
+            } else if (value === 'RungeKutta') {
+                simulation.integrator = new RungeKuttaIntegrator();
             }
         });
 
