@@ -65,6 +65,7 @@
                 <option value="angular">Angular Spring</option>
                 <option value="circle">Circle</option>
                 <option value="square">Square</option>
+                <option value="double pendulum">DoublePendulumScene</option>
             </select>
         </div>
         <div class="control-group">
@@ -78,6 +79,10 @@
         <div class="control-group">
             <label for="frameRateInput">Frame Rate (0 = Pause):</label>
             <input type="number" id="frameRateInput" min="0" max="100" value="0">
+        </div>
+        <div class="control-group">
+            <label for="timeStepInput">Time Step (ms):</label>
+            <input type="range" id="timeStepInput" min="1" max="20" value="8">
         </div>
         <div class="control-group">
             <label for="integratorSelect">Integrator:</label>
@@ -131,6 +136,8 @@
                     simulation.createCircleScene();
                 } else if (sceneType === 'square') {
                     simulation.createSquareScene();
+                } else if (sceneType === 'double pendulum') {
+                    simulation.createDoublePendulumScene();
                 }
             }
 
@@ -142,6 +149,7 @@
         const sceneSelect = document.getElementById('sceneSelect');
         const gravitySlider = document.getElementById('gravity');
         const frameRateInput = document.getElementById('frameRateInput');
+        const timeStepInput = document.getElementById('timeStepInput');
         const integratorSelect = document.getElementById('integratorSelect');
         
         if (simulation.forces.length > 0) {
@@ -149,6 +157,7 @@
             }
         gravitySlider.value = simulation.gravity.g;
         frameRateInput.value = simulation.frameRate;
+        timeStepInput.value = Math.round(simulation.timestep * 1000);
         integratorSelect.value = simulation.integrator.name();
 
         pauseButton.addEventListener('click', () => {
@@ -168,6 +177,10 @@
             });
         });
         sceneSelect.addEventListener('change', (e) => {
+            if (document.getElementById('sceneSelect').value !== 'double pendulum' &&
+                simulation.hasOwnProperty('originalDrag')) {
+                DoublePendulumScene.cleanup(simulation);
+            }
             // Only one scene for now, but ready for more
             setupScene();
             // Update stiffness slider value after scene change
@@ -186,6 +199,11 @@
             simulation.frameRate = value;
             simulation.lastTime = 0;
         });
+        timeStepInput.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value, 10);
+                if (isNaN(value)) return;
+                simulation.timestep = value / 1000;
+            });
         integratorSelect.addEventListener('change', (e) => {
             const value = e.target.value;
             if (value === 'Verlet') {

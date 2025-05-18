@@ -124,31 +124,46 @@ class Simulation {
     createSquareScene() {
         SquareScene.create(this);
     }
+
+    createDoublePendulumScene() {
+        DoublePendulumScene.create(this);
+    }
     
     update(dt) {
         const subDt = this.timestep;
         for (let s = 0; s < this.substeps; s++) {
-            this.gravity.apply(this.particles);
-            this.drag.apply(this.particles);
-            for (const force of this.forces) force.apply();
-            
-            const stepComplete = this.integrator.step(this.particles, subDt);
-
-            // recompute forces
-            if (stepComplete === false) {
+            if (this.integrator.name() === 'Midpoint' || this.integrator.name() === 'RungeKutta') {
+                this.integrator.step(this.particles, subDt, () => {
+                    // clear forces
+                    for (const p of this.particles) {
+                        p.force.x = 0;
+                        p.force.y = 0;
+                    }
+                    // compute forces
+                    this.gravity.apply(this.particles);
+                    this.drag.apply(this.particles);
+                    for (const force of this.forces) force.apply();
+                });
+            } else {
+                // compute forces once
                 for (const p of this.particles) {
                     p.force.x = 0;
                     p.force.y = 0;
                 }
-                continue;
+                this.gravity.apply(this.particles);
+                this.drag.apply(this.particles);
+                for (const force of this.forces) force.apply();
+
+                this.integrator.step(this.particles, subDt, null);
             }
 
+            // constraints
             for (let i = 0; i < this.iterations; i++) {
                 for (const constraint of this.constraints) constraint.solve();
             }
             this.ground.apply(this.particles);
             for (const p of this.particles) {
-               p.update(subDt);
+                p.update(subDt);
             }
             if (this.mouseParticle) {
                 this.mouseParticle.position.x = this.mouseX;
