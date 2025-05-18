@@ -4,6 +4,7 @@ class Particle {
         this.prevPosition = { x, y };
         this.velocity = { x: 0, y: 0 };
         this.force = { x: 0, y: 0 };
+        this.currentForce = { x: 0, y: 0 };
         this.mass = mass;
         this.fixed = false;
     }

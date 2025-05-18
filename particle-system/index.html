@@ -65,7 +65,8 @@
                 <option value="angular">Angular Spring</option>
                 <option value="circle">Circle</option>
                 <option value="square">Square</option>
-                <option value="double pendulum">DoublePendulumScene</option>
+                <option value="double pendulum">Double Pendulum</option>
+                <option value="collision">Particle Collisions</option>
             </select>
         </div>
         <div class="control-group">
@@ -93,6 +94,16 @@
                 <option value="Verlet">Verlet</option>
             </select>
         </div>
+        <div class="control-group" id="collisionControls" style="display: none;">
+            <label for="showVectors">Show Force & Velocity Vectors:</label>
+            <input type="checkbox" id="showVectors" checked>
+        
+            <label for="particleCount">Particle Count:</label>
+            <input type="range" id="particleCount" min="5" max="50" value="20">
+        
+            <label for="restitution">Bounciness:</label>
+            <input type="range" id="restitution" min="0" max="100" value="90">
+        </div>
         <button id="pauseButton">Pause</button>
     </div>
 
@@ -116,6 +127,7 @@
     <script src="js/core/AngularSpringScene.js"></script>
     <script src="js/core/CircleScene.js"></script>
     <script src="js/core/SquareScene.js"></script>
+    <script src="js/core/CollisionScene.js"></script>
     <script src="js/core/DoublePendulumScene.js"></script>
     <script>
         // Initialize simulation
@@ -138,6 +150,15 @@
                     simulation.createSquareScene();
                 } else if (sceneType === 'double pendulum') {
                     simulation.createDoublePendulumScene();
+                } else if (sceneSelect.value === 'collision') {
+                    simulation.createCollisionScene();
+                    collisionControls.style.display = 'block';
+                    if (simulation.hasOwnProperty('showVectors')) {
+                        showVectorsCheckbox.checked = simulation.showVectors;
+                    }
+                    if (simulation.hasOwnProperty('collisionRestitution')) {
+                        restitutionSlider.value = Math.round(simulation.collisionRestitution * 100);
+                    }
                 }
             }
 
@@ -151,6 +172,10 @@
         const frameRateInput = document.getElementById('frameRateInput');
         const timeStepInput = document.getElementById('timeStepInput');
         const integratorSelect = document.getElementById('integratorSelect');
+        const showVectorsCheckbox = document.getElementById('showVectors');
+        const collisionControls = document.getElementById('collisionControls');
+        const particleCountSlider = document.getElementById('particleCount');
+        const restitutionSlider = document.getElementById('restitution');
         
         if (simulation.forces.length > 0) {
                 stiffnessSlider.value = simulation.forces[0].stiffness || 200;
@@ -177,6 +202,11 @@
             });
         });
         sceneSelect.addEventListener('change', (e) => {
+            if (sceneSelect.value !== 'collision' && simulation.hasOwnProperty('particleRadii')) {
+                CollisionScene.cleanup(simulation);
+                collisionControls.style.display = 'none';
+            }
+
             if (document.getElementById('sceneSelect').value !== 'double pendulum' &&
                 simulation.hasOwnProperty('originalDrag')) {
                 DoublePendulumScene.cleanup(simulation);
@@ -216,6 +246,23 @@
                 simulation.integrator = new RungeKuttaIntegrator();
             }
         });
+        showVectorsCheckbox.addEventListener('change', (e) => {
+                if (simulation.hasOwnProperty('showVectors')) {
+                    simulation.showVectors = e.target.checked;
+                }
+        });
+        particleCountSlider.addEventListener('input', (e) => {
+                if (sceneSelect.value === 'collision') {
+                    simulation.createCollisionScene(parseInt(e.target.value, 10));
+                }
+        });
+        restitutionSlider.addEventListener('input', (e) => {
+                if (sceneSelect.value === 'collision' &&
+                    simulation.hasOwnProperty('collisionRestitution')) {
+                    simulation.collisionRestitution = parseInt(e.target.value, 10) / 100;
+                }
+        });
+
 
         // Start simulation
         simulation.start();

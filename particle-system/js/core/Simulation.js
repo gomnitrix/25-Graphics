@@ -128,6 +128,10 @@ class Simulation {
     createDoublePendulumScene() {
         DoublePendulumScene.create(this);
     }
+
+    createCollisionScene(particleCount) {
+        CollisionScene.create(this, particleCount);
+    }
     
     update(dt) {
         const subDt = this.timestep;
@@ -143,6 +147,14 @@ class Simulation {
                     this.gravity.apply(this.particles);
                     this.drag.apply(this.particles);
                     for (const force of this.forces) force.apply();
+                    
+                    // collisioin scene
+                    if (this.hasOwnProperty('particleRadii')) {
+                        for (const p of this.particles) {
+                            // save force for drawing
+                            p.currentForce = { x: p.force.x, y: p.force.y };
+                        }
+                    }
                 });
             } else {
                 // compute forces once
@@ -155,6 +167,12 @@ class Simulation {
                 for (const force of this.forces) force.apply();
 
                 this.integrator.step(this.particles, subDt, null);
+            }
+
+            // detect particles' collision
+            if (this.hasOwnProperty('particleRadii') &&
+                typeof this.checkParticleCollisions === 'function') {
+                this.checkParticleCollisions(this.particles, this.particleRadii);
             }
 
             // constraints
@@ -183,12 +201,18 @@ class Simulation {
 
         // Draw forces
         for (const force of this.forces) {
-            force.draw(this.ctx);
+            if (typeof force.draw === 'function') {
+                force.draw(this.ctx);
+            }
         }
 
         // Draw particles
         for (const particle of this.particles) {
             particle.draw(this.ctx);
+        }
+
+        if (typeof this.drawLegend === 'function' && this.hasOwnProperty('particleRadii')) {
+            this.drawLegend(this.ctx);
         }
     }
 
