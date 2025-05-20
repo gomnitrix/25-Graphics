@@ -16,10 +16,10 @@ class SquareScene {
         const bottomLeft1 = simulation.addParticle(square1CenterX - halfSide, centerY + halfSide, 1);
 
         // rigid connections
-        simulation.addDistanceConstraint(topLeft1, topRight1, sideLength);     // Top edge
-        simulation.addDistanceConstraint(topRight1, bottomRight1, sideLength); // Right edge
-        simulation.addDistanceConstraint(bottomRight1, bottomLeft1, sideLength); // Bottom edge
-        simulation.addDistanceConstraint(bottomLeft1, topLeft1, sideLength);   // Left edge
+        simulation.addRodConstraint1(topLeft1, topRight1, sideLength);     // Top edge
+        simulation.addRodConstraint1(topRight1, bottomRight1, sideLength); // Right edge
+        simulation.addRodConstraint1(bottomRight1, bottomLeft1, sideLength); // Bottom edge
+        simulation.addRodConstraint1(bottomLeft1, topLeft1, sideLength);   // Left edge
 
         // spring connections for the two diagonals
         const diagonalLength = Math.sqrt(2) * sideLength; // √2 * sideLength

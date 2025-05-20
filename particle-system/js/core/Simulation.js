@@ -7,7 +7,6 @@ class Simulation {
         this.constraints = [];
         this.lastTime = 0;
         this.isRunning = true;
-        this.iterations = 20; // Number of constraint solving iterations
         this.gravity = new GravityForce(25);
         this.drag = new DragForce(0.2);
         this.ground = new GroundForce(canvas, 0.8, 0.8);
@@ -15,7 +14,8 @@ class Simulation {
         this.substeps = 10; // substeps per frame
         this.frameRate = 40;
         this.integrator = new VerletIntegrator();
-        
+        this.constraintSolver = null;  // will be created when constraints are added
+
         // Mouse interaction properties
         this.mouseParticle = null;
         this.mouseSprings = [];
@@ -23,7 +23,6 @@ class Simulation {
         this.mouseInfluence = 30;
         this.mouseX = 0;
         this.mouseY = 0;
-        
         this.setupMouseInteraction();
     }
 
@@ -80,23 +79,35 @@ class Simulation {
         return particle;
     }
 
+    updateConstraintSolver() {
+        if (this.constraints.length > 0) {
+            this.constraintSolver = new GlobalSolver(this.particles, this.constraints);
+        } else {
+            this.constraintSolver = null;
+        }
+    }
+
     addRodConstraint1(particle1, particle2, distance) {
         const constraint = new RodConstraint1(particle1, particle2, distance);
         this.constraints.push(constraint);
+        this.updateConstraintSolver();
         return constraint;
     }
 
     addRodConstraint2(particle1, particle2, distance) {
         const constraint = new RodConstraint2(particle1, particle2, distance);
         this.constraints.push(constraint);
+        this.updateConstraintSolver();
         return constraint;
     }
 
-    addDistanceConstraint(particle1, particle2, distance) {
-        const constraint = new DistanceConstraint(particle1, particle2, distance);
-        this.constraints.push(constraint);
-        return constraint;
-    }
+    // addDistanceConstraint(particle1, particle2, distance) {
+    //     const constraint = new RodConstraint(particle1, particle2, distance);
+    //     this.constraints.push(constraint);
+    //     // Update the global solver when constraints change
+    //     this.updateConstraintSolver();
+    //     return constraint;
+    // }
 
     addAngularSpring(particle1, particle2, particle3, restAngle, stiffness, damping) {
         const spring = new AngularSpringForce(particle1, particle2, particle3, restAngle, stiffness, damping);
@@ -107,20 +118,19 @@ class Simulation {
     addCircularWire(particle, centerX, centerY, radius) {
         const constraint = new CircularWireConstraint(particle, centerX, centerY, radius);
         this.constraints.push(constraint);
+        this.updateConstraintSolver();
         return constraint;
     }
 
-    // angular spring scene
+    // Scene creation methods
     createSpringStructure(x, y, particlesNum, width = 50, height = 20) {
         AngularSpringScene.create(this, x, y, particlesNum, width, height);
     }
 
-    // circle scene
     createCircleScene() {
         CircleScene.create(this);
     }
 
-    // square scene
     createSquareScene() {
         SquareScene.create(this);
     }
@@ -132,61 +142,38 @@ class Simulation {
     createCollisionScene(particleCount) {
         CollisionScene.create(this, particleCount);
     }
-    
+
+    createFall(){
+        FreeFallScene.create(this);
+    }
+
     update(dt) {
         const subDt = this.timestep;
         for (let s = 0; s < this.substeps; s++) {
-            if (this.integrator.name() === 'Midpoint' || this.integrator.name() === 'RungeKutta') {
-                this.integrator.step(this.particles, subDt, () => {
-                    // clear forces
-                    for (const p of this.particles) {
-                        p.force.x = 0;
-                        p.force.y = 0;
-                    }
-                    // compute forces
-                    this.gravity.apply(this.particles);
-                    this.drag.apply(this.particles);
-                    for (const force of this.forces) force.apply();
-                    
-                    // collisioin scene
-                    if (this.hasOwnProperty('particleRadii')) {
-                        for (const p of this.particles) {
-                            // save force for drawing
-                            p.currentForce = { x: p.force.x, y: p.force.y };
-                        }
-                    }
-                });
-            } else {
-                // compute forces once
-                for (const p of this.particles) {
-                    p.force.x = 0;
-                    p.force.y = 0;
-                }
-                this.gravity.apply(this.particles);
-                this.drag.apply(this.particles);
-                for (const force of this.forces) force.apply();
-
-                this.integrator.step(this.particles, subDt, null);
-            }
-
-            // detect particles' collision
-            if (this.hasOwnProperty('particleRadii') &&
-                typeof this.checkParticleCollisions === 'function') {
-                this.checkParticleCollisions(this.particles, this.particleRadii);
-            }
-
-            // constraints
-            for (let i = 0; i < this.iterations; i++) {
-                for (const constraint of this.constraints) constraint.solve();
-            }
-            this.ground.apply(this.particles);
+            // clear forces
             for (const p of this.particles) {
-                p.update(subDt);
+                p.force.x = 0;
+                p.force.y = 0;
             }
+            // aplly forces
+            this.gravity.apply(this.particles);
+            this.drag.apply(this.particles);
+            this.ground.apply(this.particles);
+            for (const force of this.forces) force.apply();
+            
+            // mouse
             if (this.mouseParticle) {
                 this.mouseParticle.position.x = this.mouseX;
                 this.mouseParticle.position.y = this.mouseY;
             }
+
+            // constraints
+            if (this.constraintSolver) {
+                this.constraintSolver.step();
+            }
+
+            // integrations
+            this.integrator.step(this.particles, subDt);
         }
     }
 

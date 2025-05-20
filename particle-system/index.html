@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Angular Spring Simulation</title>
+    <title>Simulation</title>
     <style>
         body {
             margin: 0;
@@ -67,6 +67,7 @@
                 <option value="square">Square</option>
                 <option value="double pendulum">Double Pendulum</option>
                 <option value="collision">Particle Collisions</option>
+                <option value="freefall">Free Fall</option>
             </select>
         </div>
         <div class="control-group">
@@ -106,29 +107,40 @@
         </div>
         <button id="pauseButton">Pause</button>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
 
+    <!-- forces -->
     <script src="js/forces/Force.js"></script>
-    <script src="js/integrators/Integrator.js"></script>
-    <script src="js/integrators/VerletIntegrator.js"></script>
-    <script src="js/integrators/EulerIntegrator.js"></script>
-    <script src="js/integrators/MidpointIntegrator.js"></script>
-    <script src="js/integrators/RungeKuttaIntegrator.js"></script>
-    <script src="js/core/Particle.js"></script>
     <script src="js/forces/GravityForce.js"></script>
     <script src="js/forces/SpringForce.js"></script>
     <script src="js/forces/AngularSpringForce.js"></script>
     <script src="js/forces/GroundForce.js"></script>
     <script src="js/forces/DragForce.js"></script>
-    <script src="js/constraints/DistanceConstraint.js"></script>
+
+    <!-- constraints -->
+    <script src="js/constraints/GlobalSolver.js"></script>
+    <script src="js/constraints/Constraint.js"></script>
     <script src="js/constraints/RodConstraint1.js"></script>
     <script src="js/constraints/RodConstraint2.js"></script>
     <script src="js/constraints/CircularWireConstraint.js"></script>
+
+    <!-- intergrations -->
+    <script src="js/integrators/Integrator.js"></script>
+    <script src="js/integrators/VerletIntegrator.js"></script>
+    <script src="js/integrators/EulerIntegrator.js"></script>
+    <script src="js/integrators/MidpointIntegrator.js"></script>
+    <script src="js/integrators/RungeKuttaIntegrator.js"></script>
+
+    <!-- core and scene -->
+    <script src="js/core/Particle.js"></script>
     <script src="js/core/Simulation.js"></script>
     <script src="js/core/AngularSpringScene.js"></script>
     <script src="js/core/CircleScene.js"></script>
     <script src="js/core/SquareScene.js"></script>
     <script src="js/core/CollisionScene.js"></script>
     <script src="js/core/DoublePendulumScene.js"></script>
+    <script src="js/core/FreeFallScene.js"></script>
+    
     <script>
         // Initialize simulation
         const canvas = document.getElementById('simulationCanvas');
@@ -159,6 +171,8 @@
                     if (simulation.hasOwnProperty('collisionRestitution')) {
                         restitutionSlider.value = Math.round(simulation.collisionRestitution * 100);
                     }
+                } else if (sceneSelect.value === 'freefall') {
+                    simulation.createFall()
                 }
             }
 

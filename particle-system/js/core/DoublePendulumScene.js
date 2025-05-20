@@ -11,21 +11,21 @@ class DoublePendulumScene {
         const pendulumX = centerX + pendulumLength;;
         const pendulumY = centerY - 150;
         const pendulumParticle = simulation.addParticle(pendulumX, pendulumY, 1);
-        simulation.addDistanceConstraint(anchorPoint, pendulumParticle, pendulumLength);
+        simulation.addRodConstraint1(anchorPoint, pendulumParticle, pendulumLength);
 
         // second particle
         const rodLength = 50;
         const rod2X = pendulumX;
         const rod2Y = pendulumY - rodLength;
         const secondParticle = simulation.addParticle(rod2X, rod2Y, 1);
-        simulation.addDistanceConstraint(pendulumParticle, secondParticle, rodLength);
+        simulation.addRodConstraint1(pendulumParticle, secondParticle, rodLength);
 
         //third particle
         const rod3Length = 50;
         const rod3X = rod2X + rod3Length;
         const rod3Y = rod2Y;
         const thirdParticle = simulation.addParticle(rod3X, rod3Y, 1);
-        simulation.addDistanceConstraint(secondParticle, thirdParticle, rod3Length);
+        simulation.addRodConstraint1(secondParticle, thirdParticle, rod3Length);
 
         simulation.originalDrag = simulation.drag.drag;
         simulation.drag.drag = 0;

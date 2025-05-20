@@ -21,7 +21,7 @@ class AngularSpringScene {
             const dx = p2.position.x - p1.position.x;
             const dy = p2.position.y - p1.position.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            constraints.push(simulation.addDistanceConstraint(p1, p2, dist));
+            constraints.push(simulation.addRodConstraint1(p1, p2, dist));
         }
 
         // Add angular springs
