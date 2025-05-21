@@ -1,4 +1,7 @@
 class Integrator {
+    constructor(simulation) {
+        this.simulation = simulation;
+    }
     step(particles, dt) {
         throw new Error('step() must be implemented by subclass');
     }

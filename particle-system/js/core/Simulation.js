@@ -13,7 +13,7 @@ class Simulation {
         this.timestep = 1 / 48; // fixed timestep (seconds)
         this.substeps = 10; // substeps per frame
         this.frameRate = 40;
-        this.integrator = new VerletIntegrator();
+        this.integrator = new VerletIntegrator(this);
         this.constraintSolver = null;  // will be created when constraints are added
 
         // Mouse interaction properties
@@ -147,31 +147,61 @@ class Simulation {
         FreeFallScene.create(this);
     }
 
+    update1() {
+        // clear forces
+        for (const p of this.particles) {
+            p.force.x = 0;
+            p.force.y = 0;
+        }
+
+        // aplly forces
+        this.gravity.apply(this.particles);
+        this.drag.apply(this.particles);
+        this.ground.apply(this.particles);
+        for (const force of this.forces) force.apply();
+
+        // mouse
+        if (this.mouseParticle) {
+            this.mouseParticle.position.x = this.mouseX;
+            this.mouseParticle.position.y = this.mouseY;
+        }
+
+        // constraints
+        if (this.constraintSolver) {
+            this.constraintSolver.step();
+        }
+
+        // derivatives
+        const derivatives = [];
+        for (const p of this.particles) {
+            derivatives.push({
+                v: { x: p.velocity.x, y: p.velocity.y },
+                a: {
+                    x: p.force.x / p.mass,
+                    y: p.force.y / p.mass
+                }
+            });
+        }
+
+        return derivatives;
+    }
+
+    update2(derivatives, dt, n = 1.0) {
+        this.particles.forEach((p, i) => {
+            if (p.fixed) return;
+
+            const deriv = derivatives[i];
+
+            p.position.x += n * (dt * deriv.v.x);
+            p.position.y += n * (dt * deriv.v.y);
+            p.velocity.x += n * (dt * deriv.a.x);
+            p.velocity.y += n * (dt * deriv.a.y);
+        });
+    }
+
     update(dt) {
         const subDt = this.timestep;
         for (let s = 0; s < this.substeps; s++) {
-            // clear forces
-            for (const p of this.particles) {
-                p.force.x = 0;
-                p.force.y = 0;
-            }
-            // aplly forces
-            this.gravity.apply(this.particles);
-            this.drag.apply(this.particles);
-            this.ground.apply(this.particles);
-            for (const force of this.forces) force.apply();
-            
-            // mouse
-            if (this.mouseParticle) {
-                this.mouseParticle.position.x = this.mouseX;
-                this.mouseParticle.position.y = this.mouseY;
-            }
-
-            // constraints
-            if (this.constraintSolver) {
-                this.constraintSolver.step(subDt);
-            }
-
             // integrations
             this.integrator.step(this.particles, subDt);
         }

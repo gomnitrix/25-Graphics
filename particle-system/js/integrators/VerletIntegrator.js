@@ -1,9 +1,15 @@
 class VerletIntegrator extends Integrator {
+    constructor(simulation) {
+        super(simulation);
+    }
     step(particles, dt) {
+        const derivatives = this.simulation.update1();
+
         for (const p of particles) {
             if (p.fixed) continue;
-            const ax = p.force.x / p.mass;
-            const ay = p.force.y / p.mass;
+            const deriv = derivatives[particles.indexOf(p)];
+            const ax = deriv.a.x;
+            const ay = deriv.a.y;
             const newX = 2 * p.position.x - p.prevPosition.x + ax * dt * dt;
             const newY = 2 * p.position.y - p.prevPosition.y + ay * dt * dt;
             p.velocity.x = (newX - p.prevPosition.x) / (2 * dt);
@@ -12,7 +18,6 @@ class VerletIntegrator extends Integrator {
             p.position.x = newX;
             p.position.y = newY;
         }
-        return true;
     }
     
     name() {

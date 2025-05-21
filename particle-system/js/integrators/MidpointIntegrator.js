@@ -1,70 +1,40 @@
 class MidpointIntegrator extends Integrator {
-    step(particles, dt, forceCalculator) {
-        // 1. store original states
-        const originalStates = particles.map(p => ({
-            position: { x: p.position.x, y: p.position.y },
-            velocity: { x: p.velocity.x, y: p.velocity.y },
-            mass: p.mass,
-            fixed: p.fixed
-        }));
+    constructor(simulation) {
+        super(simulation);
+    }
 
-        // 2. compute initial forces and derivatives
-        for (const p of particles) {
-            p.force.x = 0;
-            p.force.y = 0;
-        }
-        forceCalculator();
+    step(particles, dt) {
+        const derivInit = this.simulation.update1();
 
-        const initialDerivs = particles.map(p => ({
-            v: { x: p.velocity.x, y: p.velocity.y },
-            a: { x: p.force.x / p.mass, y: p.force.y / p.mass }
-        }));
+        // mid state
+        const midParticles = particles.map((p, i) => {
+            const midP = new Particle(p.position.x, p.position.y, p.mass);
+            midP.fixed = p.fixed;
 
-        // 3. advance to midpoint state
-        for (let i = 0; i < particles.length; i++) {
-            const p = particles[i];
-            if (p.fixed) continue;
-            const orig = originalStates[i];
-            const deriv = initialDerivs[i];
+            if (!p.fixed) {
+                const deriv = derivInit[i];
+                midP.position.x = p.position.x + (dt / 2) * deriv.v.x;
+                midP.position.y = p.position.y + (dt / 2) * deriv.v.y;
+                midP.velocity.x = p.velocity.x + (dt / 2) * deriv.a.x;
+                midP.velocity.y = p.velocity.y + (dt / 2) * deriv.a.y;
+            } else {
+                midP.position.x = p.position.x;
+                midP.position.y = p.position.y;
+                midP.velocity.x = p.velocity.x;
+                midP.velocity.y = p.velocity.y;
+            }
+            midP.prevPosition = { x: p.prevPosition.x, y: p.prevPosition.y };
+            midP.force = { x: 0, y: 0 };
 
-            p.position.x = orig.position.x + deriv.v.x * (dt / 2);
-            p.position.y = orig.position.y + deriv.v.y * (dt / 2);
-            p.velocity.x = orig.velocity.x + deriv.a.x * (dt / 2);
-            p.velocity.y = orig.velocity.y + deriv.a.y * (dt / 2);
-        }
+            return midP;
+        });
 
-        // 4. recompute forces at midpoint
-        for (const p of particles) {
-            p.force.x = 0;
-            p.force.y = 0;
-        }
-        forceCalculator();
+        const origParticles = this.simulation.particles;
+        this.simulation.particles = midParticles;
+        const derivMid = this.simulation.update1();
+        this.simulation.particles = origParticles;
 
-        // 5. final update using midpoint derivatives
-        for (let i = 0; i < particles.length; i++) {
-            const p = particles[i];
-            if (p.fixed) continue;
-            const orig = originalStates[i];
-
-            // Store current force at midpoint for velocity update
-            const a_mid_x = p.force.x / p.mass;
-            const a_mid_y = p.force.y / p.mass;
-
-            // Use midpoint velocity for position update
-            const v_mid_x = p.velocity.x;  // this is already at midpoint
-            const v_mid_y = p.velocity.y;  // this is already at midpoint
-
-            // Update position using midpoint velocity
-            p.position.x = orig.position.x + v_mid_x * dt;
-            p.position.y = orig.position.y + v_mid_y * dt;
-
-            // Update velocity using midpoint acceleration
-            p.velocity.x = orig.velocity.x + a_mid_x * dt;
-            p.velocity.y = orig.velocity.y + a_mid_y * dt;
-
-            // Set previous position for constraints
-            p.prevPosition = { x: orig.position.x, y: orig.position.y };
-        }
+        this.simulation.update2(derivMid, dt);
 
         return true;
     }

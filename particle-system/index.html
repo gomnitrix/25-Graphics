@@ -251,13 +251,13 @@
         integratorSelect.addEventListener('change', (e) => {
             const value = e.target.value;
             if (value === 'Verlet') {
-                simulation.integrator = new VerletIntegrator();
+                simulation.integrator = new VerletIntegrator(simulation);
             } else if (value === 'Euler') {
-                simulation.integrator = new EulerIntegrator();
+                simulation.integrator = new EulerIntegrator(simulation);
             } else if (value === 'Midpoint') {
-                simulation.integrator = new MidpointIntegrator();
+                simulation.integrator = new MidpointIntegrator(simulation);
             } else if (value === 'RungeKutta') {
-                simulation.integrator = new RungeKuttaIntegrator();
+                simulation.integrator = new RungeKuttaIntegrator(simulation);
             }
         });
         showVectorsCheckbox.addEventListener('change', (e) => {
