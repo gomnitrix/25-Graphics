@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #222831;
+        }
+        canvas {
+            border: 2px solid #393e46;
+            background: #f7f7f7;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+        }
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #393e46;
+            color: #eeeeee;
+            padding: 16px;
+            border-radius: 10px;
+            box-shadow: 0 0 16px rgba(0,0,0,0.15);
+        }
+        .control-group {
+            margin: 12px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ffd369;
+        }
+        select, input[type=range] {
+            width: 140px;
+            margin-bottom: 8px;
+        }
+        button {
+            background: #00adb5;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 16px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #ffd369;
+            color: #222831;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="simulationCanvas" width="600" height="700"></canvas>
+    <div class="controls">
+        <div class="control-group">
+            <label for="sceneSelect">Scene:</label>
+            <select id="sceneSelect">
+                <option value="angular">Angular Spring</option>
+                <option value="circle">Circle</option>
+                <option value="square">Square</option>
+                <option value="double pendulum">Double Pendulum</option>
+                <option value="collision">Particle Collisions</option>
+                <option value="freefall">Free Fall</option>
+                <option value="cloth">Cloth</option>
+                <option value="hair">Hair</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label for="stiffness">Stiffness:</label>
+            <input type="range" id="stiffness" min="0" max="100" value="200">
+        </div>
+        <div class="control-group">
+            <label for="gravity">Gravity:</label>
+            <input type="range" id="gravity" min="0" max="100" value="80">
+        </div>
+        <div class="control-group">
+            <label for="frameRateInput">Frame Rate (0 = Pause):</label>
+            <input type="number" id="frameRateInput" min="0" max="100" value="0">
+        </div>
+        <div class="control-group">
+            <label for="timeStepInput">Time Step (ms):</label>
+            <input type="range" id="timeStepInput" min="1" max="50" value="8">
+        </div>
+        <div class="control-group">
+            <label for="integratorSelect">Integrator:</label>
+            <select id="integratorSelect">
+                <option value="Euler">Euler</option>
+                <option value="Midpoint">Mid-point</option>
+                <option value="RungeKutta">Runge-Kutta 4</option>
+                <option value="Verlet">Verlet</option>
+            </select>
+        </div>
+        <div class="control-group" id="collisionControls" style="display: none;">
+            <label for="showVectors">Show Force & Velocity Vectors:</label>
+            <input type="checkbox" id="showVectors" checked>
+        
+            <label for="particleCount">Particle Count:</label>
+            <input type="range" id="particleCount" min="5" max="50" value="20">
+        
+            <label for="restitution">Bounciness:</label>
+            <input type="range" id="restitution" min="0" max="100" value="90">
+        </div>
+        <button id="pauseButton">Pause</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
+
+    <!-- forces -->
+    <script src="js/forces/Force.js"></script>
+    <script src="js/forces/GravityForce.js"></script>
+    <script src="js/forces/SpringForce.js"></script>
+    <script src="js/forces/AngularSpringForce.js"></script>
+    <script src="js/forces/GroundForce.js"></script>
+    <script src="js/forces/DragForce.js"></script>
+
+    <!-- constraints -->
+    <script src="js/constraints/GlobalSolver.js"></script>
+    <script src="js/constraints/Constraint.js"></script>
+    <script src="js/constraints/RodConstraint1.js"></script>
+    <script src="js/constraints/RodConstraint2.js"></script>
+    <script src="js/constraints/CircularWireConstraint.js"></script>
+
+    <!-- intergrations -->
+    <script src="js/integrators/Integrator.js"></script>
+    <script src="js/integrators/VerletIntegrator.js"></script>
+    <script src="js/integrators/EulerIntegrator.js"></script>
+    <script src="js/integrators/MidpointIntegrator.js"></script>
+    <script src="js/integrators/RungeKuttaIntegrator.js"></script>
+
+    <!-- core and scene -->
+    <script src="js/core/Particle.js"></script>
+    <script src="js/core/Simulation.js"></script>
+    <script src="js/core/AngularSpringScene.js"></script>
+    <script src="js/core/CircleScene.js"></script>
+    <script src="js/core/SquareScene.js"></script>
+    <script src="js/core/CollisionScene.js"></script>
+    <script src="js/core/DoublePendulumScene.js"></script>
+    <script src="js/core/FreeFallScene.js"></script>
+    <script src="js/core/ClothScene.js"></script>
+    
+    <script>
+        // Controls
+        const pauseButton = document.getElementById('pauseButton');
+        const stiffnessSlider = document.getElementById('stiffness');
+        const sceneSelect = document.getElementById('sceneSelect');
+        const gravitySlider = document.getElementById('gravity');
+        const frameRateInput = document.getElementById('frameRateInput');
+        const timeStepInput = document.getElementById('timeStepInput');
+        const integratorSelect = document.getElementById('integratorSelect');
+        const showVectorsCheckbox = document.getElementById('showVectors');
+        const collisionControls = document.getElementById('collisionControls');
+        const particleCountSlider = document.getElementById('particleCount');
+        const restitutionSlider = document.getElementById('restitution');
+
+        // Initialize simulation
+        const canvas = document.getElementById('simulationCanvas');
+        const simulation = new Simulation(canvas);
+
+        function setupScene() {
+                const sceneType = document.getElementById('sceneSelect').value;
+
+                // Clear existing simulation
+                simulation.particles = [];
+                simulation.forces = [];
+                simulation.constraints = [];
+
+                if (sceneType === 'angular') {
+                    simulation.createSpringStructure(200, 200, 8, 100, 35);
+                } else if (sceneType === 'circle') {
+                    simulation.createCircleScene();
+                } else if (sceneType === 'square') {
+                    simulation.createSquareScene();
+                } else if (sceneType === 'double pendulum') {
+                    simulation.createDoublePendulumScene();
+                } else if (sceneSelect.value === 'collision') {
+                    simulation.createCollisionScene();
+                    collisionControls.style.display = 'block';
+                    if (simulation.hasOwnProperty('showVectors')) {
+                        showVectorsCheckbox.checked = simulation.showVectors;
+                    }
+                    if (simulation.hasOwnProperty('collisionRestitution')) {
+                        restitutionSlider.value = Math.round(simulation.collisionRestitution * 100);
+                    }
+                } else if (sceneSelect.value === 'freefall') {
+                    simulation.createFall()
+                } else if (sceneType === 'cloth') {
+                    simulation.createCloth()
+                }
+            }
+
+        setupScene();
+
+
+        if (simulation.forces.length > 0) {
+                stiffnessSlider.value = simulation.forces[0].stiffness || 200;
+            }
+        gravitySlider.value = simulation.gravity.g;
+        frameRateInput.value = simulation.frameRate;
+        timeStepInput.value = Math.round(simulation.timestep * 1000);
+        integratorSelect.value = simulation.integrator.name();
+
+        pauseButton.addEventListener('click', () => {
+            if (simulation.isRunning) {
+                simulation.pause();
+                pauseButton.textContent = 'Resume';
+            } else {
+                simulation.start();
+                pauseButton.textContent = 'Pause';
+            }
+        });
+        stiffnessSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            if (isNaN(value)) return;
+            simulation.forces.forEach(f => {
+                f.setStiffness(value);
+            });
+        });
+        sceneSelect.addEventListener('change', (e) => {
+            if (sceneSelect.value !== 'collision' && simulation.hasOwnProperty('particleRadii')) {
+                CollisionScene.cleanup(simulation);
+                collisionControls.style.display = 'none';
+            }
+
+            if (document.getElementById('sceneSelect').value !== 'double pendulum' &&
+                simulation.hasOwnProperty('originalDrag')) {
+                DoublePendulumScene.cleanup(simulation);
+            }
+            // Only one scene for now, but ready for more
+            setupScene();
+            // Update stiffness slider value after scene change
+            if (simulation.forces.length > 0 && simulation.forces[0].stiffness !== undefined) {
+                stiffnessSlider.value = simulation.forces[0].stiffness;
+            }
+        });
+        gravitySlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            if (isNaN(value)) return;
+            simulation.gravity.g = value;
+        });
+        frameRateInput.addEventListener('input', (e) => {
+            const value = parseInt(e.target.value, 10);
+            if (isNaN(value)) return;
+            simulation.frameRate = value;
+            simulation.lastTime = 0;
+        });
+        timeStepInput.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value, 10);
+                if (isNaN(value)) return;
+                simulation.timestep = value / 1000;
+            });
+        integratorSelect.addEventListener('change', (e) => {
+            const value = e.target.value;
+            if (value === 'Verlet') {
+                simulation.integrator = new VerletIntegrator(simulation);
+            } else if (value === 'Euler') {
+                simulation.integrator = new EulerIntegrator(simulation);
+            } else if (value === 'Midpoint') {
+                simulation.integrator = new MidpointIntegrator(simulation);
+            } else if (value === 'RungeKutta') {
+                simulation.integrator = new RungeKuttaIntegrator(simulation);
+            }
+        });
+        showVectorsCheckbox.addEventListener('change', (e) => {
+                if (simulation.hasOwnProperty('showVectors')) {
+                    simulation.showVectors = e.target.checked;
+                }
+        });
+        particleCountSlider.addEventListener('input', (e) => {
+                if (sceneSelect.value === 'collision') {
+                    simulation.createCollisionScene(parseInt(e.target.value, 10));
+                }
+        });
+        restitutionSlider.addEventListener('input', (e) => {
+                if (sceneSelect.value === 'collision' &&
+                    simulation.hasOwnProperty('collisionRestitution')) {
+                    simulation.collisionRestitution = parseInt(e.target.value, 10) / 100;
+                }
+        });
+
+
+        // Start simulation
+        simulation.start();
+    </script>
+</body>
+</html> 
