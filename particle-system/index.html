@@ -91,8 +91,9 @@
             <select id="integratorSelect">
                 <option value="Euler">Euler</option>
                 <option value="Midpoint">Mid-point</option>
-                <option value="RungeKutta">Runge-Kutta 4</option>
+                <option value="RungeKutta">Runge Kutta 4</option>
                 <option value="Verlet">Verlet</option>
+                <option value="ImplicitEuler">Implicit Euler</option>
             </select>
         </div>
         <div class="control-group" id="collisionControls" style="display: none;">
@@ -107,7 +108,7 @@
         </div>
         <button id="pauseButton">Pause</button>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
+    <script src="js/numeric-1.2.6.js"></script>
 
     <!-- forces -->
     <script src="js/forces/Force.js"></script>
@@ -130,6 +131,7 @@
     <script src="js/integrators/EulerIntegrator.js"></script>
     <script src="js/integrators/MidpointIntegrator.js"></script>
     <script src="js/integrators/RungeKuttaIntegrator.js"></script>
+    <script src="js/integrators/ImplicitEulerIntegrator.js"></script>
 
     <!-- core and scene -->
     <script src="js/core/Particle.js"></script>
@@ -258,6 +260,8 @@
                 simulation.integrator = new MidpointIntegrator(simulation);
             } else if (value === 'RungeKutta') {
                 simulation.integrator = new RungeKuttaIntegrator(simulation);
+            } else if (value === 'ImplicitEuler') {
+                simulation.integrator = new ImplicitEulerIntegrator(simulation);
             }
         });
         showVectorsCheckbox.addEventListener('change', (e) => {
