@@ -37,7 +37,7 @@ class GlobalSolver {
         // fill Q and W
         this.particles.forEach((p, idx) => {
             if (p.fixed) {
-                // Fixed: no force contribution, zero mass weight
+                // skip fixed
                 Q[2 * idx] = 0;
                 Q[2 * idx + 1] = 0;
                 W[2 * idx] = 0;
@@ -58,13 +58,13 @@ class GlobalSolver {
             particles.forEach((p, k) => {
                 const idx = this.particles.indexOf(p);
                 if (p.fixed) {
-                    // Skip fixed
+                    // skip fixed
                     J[i][2 * idx] = 0;
                     J[i][2 * idx + 1] = 0;
                     Jdot[i][2 * idx] = 0;
                     Jdot[i][2 * idx + 1] = 0;
                 } else {
-                    // Assign jacobian entries
+                    // assign jacobian entries
                     J[i][2 * idx] = jac[2 * k] !== undefined ? jac[2 * k] : jac[0];
                     J[i][2 * idx + 1] = jac[2 * k + 1] !== undefined ? jac[2 * k + 1] : jac[1];
                     Jdot[i][2 * idx] = jacDot[2 * k] !== undefined ? jacDot[2 * k] : jacDot[0];
@@ -106,38 +106,85 @@ class GlobalSolver {
         return Qhat;
     }
 
-
+    // LU decomposition and solver for Ax = b
     solveLagrangeMultiplier(A, b) {
-        const M = b.length;
-        // Convert dense A to CCS
-        const rows = [], cols = [], vals = [];
-        for (let i = 0; i < M; ++i) {
-            for (let j = 0; j < M; ++j) {
-                const v = A[i][j];
-                if (v !== 0) {
-                    rows.push(i);
-                    cols.push(j);
-                    vals.push(v);
+        const n = b.length;
+        const matrixA = A.map(row => [...row]);
+        const vectorB = [...b];
+
+        // Add regularization to improve numerical stability
+        for (let i = 0; i < n; i++) {
+            matrixA[i][i] += 1e-7;  // Small regularization term
+        }
+
+        // LU decomposition
+        for (let k = 0; k < n - 1; k++) {
+            let maxIdx = k;
+            let maxVal = Math.abs(matrixA[k][k]);
+
+            for (let i = k + 1; i < n; i++) {
+                if (Math.abs(matrixA[i][k]) > maxVal) {
+                    maxIdx = i;
+                    maxVal = Math.abs(matrixA[i][k]);
                 }
             }
+
+            if (maxIdx !== k) {
+                [matrixA[k], matrixA[maxIdx]] = [matrixA[maxIdx], matrixA[k]];
+                [vectorB[k], vectorB[maxIdx]] = [vectorB[maxIdx], vectorB[k]];
+            }
+
+            if (Math.abs(matrixA[k][k]) < 1e-10) {
+                matrixA[k][k] += 1e-10;
+            }
+
+            // elimination
+            for (let i = k + 1; i < n; i++) {
+                const factor = matrixA[i][k] / matrixA[k][k];
+                matrixA[i][k] = factor;
+
+                for (let j = k + 1; j < n; j++) {
+                    matrixA[i][j] -= factor * matrixA[k][j];
+                }
+
+                vectorB[i] -= factor * vectorB[k];
+            }
         }
-        const ccsA = numeric.ccsScatter([rows, cols, vals]);
 
-        // Convert b to CCS (Mx1)
-        const brow = [], bcol = [], bval = [];
-        for (let i = 0; i < M; ++i) {
-            brow.push(i);
-            bcol.push(0);
-            bval.push(b[i]);
+        const x = new Array(n).fill(0);
+
+        for (let i = n - 1; i >= 0; i--) {
+            let sum = 0;
+            for (let j = i + 1; j < n; j++) {
+                sum += matrixA[i][j] * x[j];
+            }
+            x[i] = (vectorB[i] - sum) / matrixA[i][i];
         }
-        const ccsb = numeric.ccsScatter([brow, bcol, bval]);
 
-        // Solve using LUP with pivoting
-        const lu = numeric.ccsLUP(ccsA);
-        const lmbccs = numeric.ccsLUPSolve(lu, ccsb);
+        return x;
+    }
 
-        // Convert back to full vector and return as 1D array
-        const lambdaFull = numeric.ccsFull(lmbccs);
-        return lambdaFull.map(row => row[0]);
+    
+    // matrix-vector multiplication
+    multiplyMatrixVector(A, v) {
+        const n = A.length;
+        const result = new Array(n).fill(0);
+
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+                result[i] += A[i][j] * v[j];
+            }
+        }
+
+        return result;
+    }
+
+    // vector dot product
+    dotProduct(a, b) {
+        let sum = 0;
+        for (let i = 0; i < a.length; i++) {
+            sum += a[i] * b[i];
+        }
+        return sum;
     }
 }

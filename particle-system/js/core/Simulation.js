@@ -10,7 +10,7 @@ class Simulation {
         this.gravity = new GravityForce(25);
         this.drag = new DragForce(0.2);
         this.ground = new GroundForce(canvas, 0.8, 0.8);
-        this.timestep = 1 / 120; // fixed timestep (seconds)
+        this.timestep = 1 / 48; // fixed timestep (seconds)
         this.substeps = 10; // substeps per frame
         this.frameRate = 40;
         this.integrator = new VerletIntegrator();
@@ -169,7 +169,7 @@ class Simulation {
 
             // constraints
             if (this.constraintSolver) {
-                this.constraintSolver.step();
+                this.constraintSolver.step(subDt);
             }
 
             // integrations

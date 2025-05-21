@@ -8,7 +8,7 @@ class CircularWireConstraint extends Constraint {
         this.pc = new Particle(cx, cy);
         this.pc.fixed = true;
         this.feedbackforces = [
-            new SpringForce(this.p, this.pc, r, 5000.0, 0.5)
+            new SpringForce(this.p, this.pc, r, 1000.0, 0.5)
         ];
     }
 
