@@ -147,6 +147,10 @@ class Simulation {
         FreeFallScene.create(this);
     }
 
+    createCloth(){
+        ClothScene.create(this);
+    }
+
     update1() {
         // clear forces
         for (const p of this.particles) {
@@ -222,7 +226,7 @@ class Simulation {
                 force.draw(this.ctx);
             }
         }
-
+/*
         // Draw particles
         for (const particle of this.particles) {
             particle.draw(this.ctx);
@@ -231,6 +235,7 @@ class Simulation {
         if (typeof this.drawLegend === 'function' && this.hasOwnProperty('particleRadii')) {
             this.drawLegend(this.ctx);
         }
+            */
     }
 
     animate(currentTime) {

@@ -68,6 +68,8 @@
                 <option value="double pendulum">Double Pendulum</option>
                 <option value="collision">Particle Collisions</option>
                 <option value="freefall">Free Fall</option>
+                <option value="cloth">Cloth</option>
+                <option value="hair">Hair</option>
             </select>
         </div>
         <div class="control-group">
@@ -108,7 +110,6 @@
         </div>
         <button id="pauseButton">Pause</button>
     </div>
-    <script src="js/numeric-1.2.6.js"></script>
 
     <!-- forces -->
     <script src="js/forces/Force.js"></script>
@@ -142,8 +143,23 @@
     <script src="js/core/CollisionScene.js"></script>
     <script src="js/core/DoublePendulumScene.js"></script>
     <script src="js/core/FreeFallScene.js"></script>
+    <script src="js/core/ClothScene.js"></script>
     
     <script>
+
+        // Controls
+        const pauseButton = document.getElementById('pauseButton');
+        const stiffnessSlider = document.getElementById('stiffness');
+        const sceneSelect = document.getElementById('sceneSelect');
+        const gravitySlider = document.getElementById('gravity');
+        const frameRateInput = document.getElementById('frameRateInput');
+        const timeStepInput = document.getElementById('timeStepInput');
+        const integratorSelect = document.getElementById('integratorSelect');
+        const showVectorsCheckbox = document.getElementById('showVectors');
+        const collisionControls = document.getElementById('collisionControls');
+        const particleCountSlider = document.getElementById('particleCount');
+        const restitutionSlider = document.getElementById('restitution');
+
         // Initialize simulation
         const canvas = document.getElementById('simulationCanvas');
         const simulation = new Simulation(canvas);
@@ -175,23 +191,14 @@
                     }
                 } else if (sceneSelect.value === 'freefall') {
                     simulation.createFall()
+                } else if (sceneType === 'cloth') {
+                    simulation.createCloth()
                 }
             }
 
         setupScene();
 
-        // Controls
-        const pauseButton = document.getElementById('pauseButton');
-        const stiffnessSlider = document.getElementById('stiffness');
-        const sceneSelect = document.getElementById('sceneSelect');
-        const gravitySlider = document.getElementById('gravity');
-        const frameRateInput = document.getElementById('frameRateInput');
-        const timeStepInput = document.getElementById('timeStepInput');
-        const integratorSelect = document.getElementById('integratorSelect');
-        const showVectorsCheckbox = document.getElementById('showVectors');
-        const collisionControls = document.getElementById('collisionControls');
-        const particleCountSlider = document.getElementById('particleCount');
-        const restitutionSlider = document.getElementById('restitution');
+
         
         if (simulation.forces.length > 0) {
                 stiffnessSlider.value = simulation.forces[0].stiffness || 200;
