@@ -4,7 +4,6 @@ class AngularSpringScene {
         const springs = [];
         const constraints = [];
 
-        // Create particles in a triangular pattern
         let currY = y;
         for (let i = 0; i < particlesNum; i++) {
             const px = (i % 2 === 0) ? x : x + width;
@@ -14,7 +13,6 @@ class AngularSpringScene {
             particles.push(particle);
         }
 
-        // Add distance constraints between adjacent particles
         for (let i = 0; i < particlesNum - 1; i++) {
             const p1 = particles[i];
             const p2 = particles[i + 1];
@@ -24,7 +22,6 @@ class AngularSpringScene {
             constraints.push(simulation.addRodConstraint1(p1, p2, dist));
         }
 
-        // Add angular springs
         for (let i = 0; i < particlesNum - 2; i++) {
             const p1 = particles[i];
             const p2 = particles[i + 1];

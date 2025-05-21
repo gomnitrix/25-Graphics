@@ -62,14 +62,14 @@
         <div class="control-group">
             <label for="sceneSelect">Scene:</label>
             <select id="sceneSelect">
-                <option value="angular">Angular Spring</option>
-                <option value="circle">Circle</option>
                 <option value="square">Square</option>
-                <option value="double pendulum">Double Pendulum</option>
-                <option value="collision">Particle Collisions</option>
-                <option value="freefall">Free Fall</option>
+                <option value="circlependulum">Circle Pendulum</option>
+                <option value="rodpendulum">Rod Pendulum</option>
+                <option value="angular">Angular Spring</option>
                 <option value="cloth">Cloth</option>
                 <option value="hair">Hair</option>
+                <option value="collision">Particle Collisions</option>
+                <option value="freefall">Free Fall</option>
             </select>
         </div>
         <div class="control-group">
@@ -98,16 +98,6 @@
                 <option value="ImplicitEuler">Implicit Euler</option>
             </select>
         </div>
-        <div class="control-group" id="collisionControls" style="display: none;">
-            <label for="showVectors">Show Force & Velocity Vectors:</label>
-            <input type="checkbox" id="showVectors" checked>
-        
-            <label for="particleCount">Particle Count:</label>
-            <input type="range" id="particleCount" min="5" max="50" value="20">
-        
-            <label for="restitution">Bounciness:</label>
-            <input type="range" id="restitution" min="0" max="100" value="90">
-        </div>
         <button id="pauseButton">Pause</button>
     </div>
 
@@ -118,6 +108,8 @@
     <script src="js/forces/AngularSpringForce.js"></script>
     <script src="js/forces/GroundForce.js"></script>
     <script src="js/forces/DragForce.js"></script>
+    <script src="js/forces/ObjCollision.js"></script>
+    <script src="js/forces/pCollisionForce.js"></script>
 
     <!-- constraints -->
     <script src="js/constraints/GlobalSolver.js"></script>
@@ -138,13 +130,14 @@
     <script src="js/core/Particle.js"></script>
     <script src="js/core/Simulation.js"></script>
     <script src="js/core/AngularSpringScene.js"></script>
-    <script src="js/core/CircleScene.js"></script>
+    <script src="js/core/CirclePendulumScene.js"></script>
     <script src="js/core/SquareScene.js"></script>
     <script src="js/core/CollisionScene.js"></script>
-    <script src="js/core/DoublePendulumScene.js"></script>
+    <script src="js/core/RodPendulumScene.js"></script>
     <script src="js/core/FreeFallScene.js"></script>
     <script src="js/core/ClothScene.js"></script>
-    
+    <script src="js/core/HairScene.js"></script>
+
     <script>
 
         // Controls
@@ -155,14 +148,10 @@
         const frameRateInput = document.getElementById('frameRateInput');
         const timeStepInput = document.getElementById('timeStepInput');
         const integratorSelect = document.getElementById('integratorSelect');
-        const showVectorsCheckbox = document.getElementById('showVectors');
-        const collisionControls = document.getElementById('collisionControls');
-        const particleCountSlider = document.getElementById('particleCount');
-        const restitutionSlider = document.getElementById('restitution');
 
         // Initialize simulation
         const canvas = document.getElementById('simulationCanvas');
-        const simulation = new Simulation(canvas);
+        const simulation = new Simulation(canvas, sceneSelect.value);
 
         function setupScene() {
                 const sceneType = document.getElementById('sceneSelect').value;
@@ -171,28 +160,24 @@
                 simulation.particles = [];
                 simulation.forces = [];
                 simulation.constraints = [];
+                simulation.scene = sceneType;
 
                 if (sceneType === 'angular') {
                     simulation.createSpringStructure(200, 200, 8, 100, 35);
-                } else if (sceneType === 'circle') {
-                    simulation.createCircleScene();
+                } else if (sceneType === 'circlependulum') {
+                    CirclePendulumScene.create(simulation);
                 } else if (sceneType === 'square') {
                     simulation.createSquareScene();
-                } else if (sceneType === 'double pendulum') {
-                    simulation.createDoublePendulumScene();
+                } else if (sceneType === 'rodpendulum') {
+                    RodPendulumScene.create(simulation);
                 } else if (sceneSelect.value === 'collision') {
                     simulation.createCollisionScene();
-                    collisionControls.style.display = 'block';
-                    if (simulation.hasOwnProperty('showVectors')) {
-                        showVectorsCheckbox.checked = simulation.showVectors;
-                    }
-                    if (simulation.hasOwnProperty('collisionRestitution')) {
-                        restitutionSlider.value = Math.round(simulation.collisionRestitution * 100);
-                    }
                 } else if (sceneSelect.value === 'freefall') {
                     simulation.createFall()
                 } else if (sceneType === 'cloth') {
                     simulation.createCloth()
+                } else if (sceneType === 'hair') {
+                    simulation.createHair()
                 }
             }
 
@@ -225,14 +210,14 @@
             });
         });
         sceneSelect.addEventListener('change', (e) => {
-            if (sceneSelect.value !== 'collision' && simulation.hasOwnProperty('particleRadii')) {
-                CollisionScene.cleanup(simulation);
-                collisionControls.style.display = 'none';
+            // Clean up Rod pendulum scene if it exists
+            if (simulation.hasOwnProperty('trails')) {
+                RodPendulumScene.cleanup(simulation);
             }
-
-            if (document.getElementById('sceneSelect').value !== 'double pendulum' &&
+            
+            if (document.getElementById('sceneSelect').value !== 'rodpendulum' &&
                 simulation.hasOwnProperty('originalDrag')) {
-                DoublePendulumScene.cleanup(simulation);
+                RodPendulumScene.cleanup(simulation);
             }
             // Only one scene for now, but ready for more
             setupScene();
@@ -270,22 +255,6 @@
             } else if (value === 'ImplicitEuler') {
                 simulation.integrator = new ImplicitEulerIntegrator(simulation);
             }
-        });
-        showVectorsCheckbox.addEventListener('change', (e) => {
-                if (simulation.hasOwnProperty('showVectors')) {
-                    simulation.showVectors = e.target.checked;
-                }
-        });
-        particleCountSlider.addEventListener('input', (e) => {
-                if (sceneSelect.value === 'collision') {
-                    simulation.createCollisionScene(parseInt(e.target.value, 10));
-                }
-        });
-        restitutionSlider.addEventListener('input', (e) => {
-                if (sceneSelect.value === 'collision' &&
-                    simulation.hasOwnProperty('collisionRestitution')) {
-                    simulation.collisionRestitution = parseInt(e.target.value, 10) / 100;
-                }
         });
 
 

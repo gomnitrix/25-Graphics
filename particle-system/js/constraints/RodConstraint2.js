@@ -5,7 +5,7 @@ class RodConstraint2 extends Constraint {
         this.p2 = p2;
         this.length = length;
         this.feedbackforces = [
-            new SpringForce(p1, p2, length, 50.0, 0.5)
+            new SpringForce(p1, p2, length, 100.0, 1)
         ];
     }
 

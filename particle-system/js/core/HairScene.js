@@ -1,13 +1,13 @@
-class ClothScene {
+class HairScene {
     static create(simulation) {
-        const numRow = 10;
+        const numRow = 5;
         const numCol = 20;
-        const spacing = 20;
-        const x = 120;
-        const y = 100;
+        const spacing = 10;
+        const x = 50;
+        const y = 10;
 
-        const springConst = 20;
-        const particleMass = 1;
+        const springConst = 10;
+        const particleMass = 5;
         const damp = 0.5;
 
         const particles = [];
@@ -30,10 +30,7 @@ class ClothScene {
         }
         for (let j = 0; j < numRow; j++) {
             for (let i = 0; i < numCol; i++) {
-                if (i < numCol - 1) {
-                    const springRight = new SpringForce(particles[j * numCol + i], particles[j * numCol + i + 1], spacing, springConst, damp);
-                    springs.push(springRight);
-                }
+
                 if (j < numRow - 1) {
                     const springDown = new SpringForce(particles[j * numCol + i], particles[(j + 1) * numCol + i], spacing, springConst, damp);
                     springs.push(springDown);

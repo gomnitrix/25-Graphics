@@ -16,23 +16,20 @@ class SpringForce extends Force {
     }
 
     apply() {
-        // Calculate position differences (from p1 to p2)
+        // calculate position differences 
         const dx = this.p1.position.x - this.p2.position.x;
         const dy = this.p1.position.y - this.p2.position.y;
         const dist = Math.hypot(dx, dy);
         
-        // Calculate velocity differences (from p1 to p2)
+        // calculate velocity differences 
         const dvx = this.p1.velocity.x - this.p2.velocity.x;
         const dvy = this.p1.velocity.y - this.p2.velocity.y;
 
-        // Calculate spring force
         const springForce = -(this.stiffnessConstant * this.stiffness * (dist - this.restLength));
         
-        // Calculate forces in x and y directions
         const fx = (springForce - (this.damping * (dvx * dx)) / dist) * (dx / dist);
         const fy = (springForce - (this.damping * (dvy * dy)) / dist) * (dy / dist);
 
-        // Apply forces if they are valid
         if (!isNaN(fx) && isFinite(fx)) {
             this.p1.applyForce(fx, 0);
             this.p2.applyForce(-fx, 0);
@@ -42,7 +39,6 @@ class SpringForce extends Force {
             this.p2.applyForce(0, -fy);
         }
 
-        // Clamp velocities to prevent excessive movement
         const maxVelocity = 800;
         this.p1.velocity.x = Math.max(-maxVelocity, Math.min(maxVelocity, this.p1.velocity.x));
         this.p1.velocity.y = Math.max(-maxVelocity, Math.min(maxVelocity, this.p1.velocity.y));

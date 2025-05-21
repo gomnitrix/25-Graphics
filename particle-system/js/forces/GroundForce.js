@@ -9,34 +9,33 @@ class GroundForce {
     apply(particles) {
         const w = this.canvas.width, h = this.canvas.height;
         for (const p of particles) {
-            // Ground
-            if (p.position.y > h - this.margin) {
-                p.position.y = h - this.margin;
-                // 正确的 Verlet 反弹
+            // ground
+            if (p.position.y + p.radius > h - this.margin) {
+                p.position.y = h - this.margin - p.radius;
                 const vy = p.position.y - p.prevPosition.y;
                 p.prevPosition.y = p.position.y + vy * this.restitution;
                 p.velocity.y *= -this.restitution;
                 p.velocity.x *= this.friction;
             }
-            // Ceiling
-            if (p.position.y < this.margin) {
-                p.position.y = this.margin;
+            // ceiling
+            if (p.position.y - p.radius < this.margin) {
+                p.position.y = this.margin + p.radius;
                 const vy = p.position.y - p.prevPosition.y;
                 p.prevPosition.y = p.position.y + vy * this.restitution;
                 p.velocity.y *= -this.restitution;
                 p.velocity.x *= this.friction;
             }
-            // Left wall
-            if (p.position.x < this.margin) {
-                p.position.x = this.margin;
+            // left wall
+            if (p.position.x - p.radius < this.margin) {
+                p.position.x = this.margin + p.radius;
                 const vx = p.position.x - p.prevPosition.x;
                 p.prevPosition.x = p.position.x + vx * this.restitution;
                 p.velocity.x *= -this.restitution;
                 p.velocity.y *= this.friction;
             }
-            // Right wall
-            if (p.position.x > w - this.margin) {
-                p.position.x = w - this.margin;
+            // right wall
+            if (p.position.x + p.radius > w - this.margin) {
+                p.position.x = w - this.margin - p.radius;
                 const vx = p.position.x - p.prevPosition.x;
                 p.prevPosition.x = p.position.x + vx * this.restitution;
                 p.velocity.x *= -this.restitution;

@@ -1,5 +1,6 @@
 class Simulation {
-    constructor(canvas) {
+    constructor(canvas, sceneSelect) {
+        this.scene = sceneSelect;
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.particles = [];
@@ -10,7 +11,8 @@ class Simulation {
         this.gravity = new GravityForce(25);
         this.drag = new DragForce(0.2);
         this.ground = new GroundForce(canvas, 0.8, 0.8);
-        this.timestep = 1 / 48; // fixed timestep (seconds)
+        this.CObj = new ObjCollision(100, 200, 100, 200);
+        this.timestep = 1 / 30; // fixed timestep (seconds)
         this.substeps = 10; // substeps per frame
         this.frameRate = 40;
         this.integrator = new VerletIntegrator(this);
@@ -127,28 +129,36 @@ class Simulation {
         AngularSpringScene.create(this, x, y, particlesNum, width, height);
     }
 
-    createCircleScene() {
-        CircleScene.create(this);
+    createCirclePendulumScene() {
+        CirclePendulumScene.create(this);
     }
 
     createSquareScene() {
         SquareScene.create(this);
     }
 
-    createDoublePendulumScene() {
-        DoublePendulumScene.create(this);
+    createRodPendulumScene() {
+        RodPendulumScene.create(this);
     }
 
     createCollisionScene(particleCount) {
         CollisionScene.create(this, particleCount);
     }
 
-    createFall(){
+    createFall() {
         FreeFallScene.create(this);
     }
 
-    createCloth(){
+    createCloth() {
         ClothScene.create(this);
+    }
+
+    createHair() {
+        HairScene.create(this);
+    }
+
+    createRodCircleScene() {
+        RodCircleScene.create(this);
     }
 
     update1() {
@@ -162,6 +172,9 @@ class Simulation {
         this.gravity.apply(this.particles);
         this.drag.apply(this.particles);
         this.ground.apply(this.particles);
+        if (this.scene == "hair" || this.scene == "cloth") {
+            this.CObj.apply(this.particles);
+        }
         for (const force of this.forces) force.apply();
 
         // mouse
@@ -226,7 +239,7 @@ class Simulation {
                 force.draw(this.ctx);
             }
         }
-/*
+
         // Draw particles
         for (const particle of this.particles) {
             particle.draw(this.ctx);
@@ -235,7 +248,24 @@ class Simulation {
         if (typeof this.drawLegend === 'function' && this.hasOwnProperty('particleRadii')) {
             this.drawLegend(this.ctx);
         }
-            */
+
+        if (this.scene == "hair" || this.scene == "cloth") {
+            this.CObj = new ObjCollision(100, 200, 100, 200);
+
+            // draw rect
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.fillStyle = "green";
+            this.ctx.fillRect(100, 100, 100, 100);
+            this.ctx.strokeStyle = "black";
+            this.ctx.lineWidth = 2;
+            this.ctx.globalAlpha = 0.8;
+            this.ctx.stroke();
+            this.ctx.globalAlpha = 1.0;
+            this.ctx.closePath();
+            this.ctx.restore();
+        }
+
     }
 
     animate(currentTime) {
